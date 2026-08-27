@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 11 — Measure Value (ROI, Token Economics, Governance)</title>
+<style>
+  :root {
+    --navy: #1a2332;
+    --navy-light: #2a3a4e;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --green: #22c55e;
+    --green-bg: #f0fdf4;
+    --red: #ef4444;
+    --red-bg: #fef2f2;
+    --orange: #f59e0b;
+    --orange-bg: #fffbeb;
+    --purple: #8b5cf6;
+    --purple-bg: #f5f3ff;
+    --teal: #14b8a6;
+    --teal-bg: #f0fdfa;
+    --pink: #ec4899;
+    --pink-bg: #fdf2f8;
+    --cyan: #06b6d4;
+    --cyan-bg: #ecfeff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-800); line-height: 1.6; }
+  .header { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); color: white; padding: 28px 32px; }
+  .header-badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 14px; color: rgba(255,255,255,0.75); }
+  .header-meta { display: flex; gap: 20px; margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.6); }
+  .tab-bar { display: flex; gap: 0; background: white; border-bottom: 1px solid var(--gray-200); padding: 0 16px; overflow-x: auto; position: sticky; top: 0; z-index: 100; }
+  .tab-bar button { padding: 14px 18px; border: none; background: none; font-size: 13px; font-weight: 500; color: var(--gray-500); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-bar button:hover { color: var(--gray-700); }
+  .tab-bar button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab-bar button.quiz-tab { color: var(--purple); }
+  .tab-bar button.quiz-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+  .tab-content { display: none; padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+  .section-heading { font-size: 18px; font-weight: 700; color: var(--gray-800); margin-bottom: 6px; }
+  .section-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 20px; }
+  .card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .card-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-desc { font-size: 13px; color: var(--gray-600); line-height: 1.7; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .compare-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--gray-200); margin: 16px 0; }
+  .compare-table th { background: var(--navy); color: white; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; }
+  .compare-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--gray-100); }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: var(--gray-50); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .badge-green { background: var(--green-bg); color: #166534; }
+  .badge-orange { background: var(--orange-bg); color: #92400e; }
+  .badge-red { background: var(--red-bg); color: #991b1b; }
+  .badge-purple { background: var(--purple-bg); color: #5b21b6; }
+  .badge-teal { background: var(--teal-bg); color: #115e59; }
+  .badge-blue { background: #eff6ff; color: #1e40af; }
+  .pill-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pill { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 500; color: var(--gray-700); }
+  .expandable { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }
+  .expand-header { padding: 12px 16px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; transition: background 0.2s; }
+  .expand-header:hover { background: var(--gray-50); }
+  .expand-arrow { transition: transform 0.3s; font-size: 12px; color: var(--gray-400); }
+  .expand-body { padding: 0 16px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; font-size: 13px; color: var(--gray-600); line-height: 1.7; }
+  .expandable.open .expand-body { max-height: 600px; padding: 12px 16px; }
+  .expandable.open .expand-arrow { transform: rotate(180deg); }
+  .highlight-box { border-radius: var(--radius-sm); padding: 16px; margin: 16px 0; font-size: 13px; line-height: 1.7; }
+  .highlight-box.green { background: var(--green-bg); border-left: 4px solid var(--green); }
+  .highlight-box.orange { background: var(--orange-bg); border-left: 4px solid var(--orange); }
+  .highlight-box.red { background: var(--red-bg); border-left: 4px solid var(--red); }
+  .highlight-box.blue { background: #eff6ff; border-left: 4px solid var(--accent); }
+  .highlight-box.purple { background: var(--purple-bg); border-left: 4px solid var(--purple); }
+  .highlight-box.teal { background: var(--teal-bg); border-left: 4px solid var(--teal); }
+  .highlight-box strong { font-weight: 600; }
+  .metric-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-value { font-size: 24px; font-weight: 700; color: var(--navy); min-width: 60px; }
+  .metric-label { font-size: 13px; color: var(--gray-600); }
+  .metric-bar { height: 6px; background: var(--gray-200); border-radius: 3px; flex: 1; }
+  .metric-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .quiz-question { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .quiz-question h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; gap: 8px; }
+  .quiz-question h3 .q-num { color: var(--purple); }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option { padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: flex-start; gap: 8px; }
+  .quiz-option:hover { border-color: var(--accent); background: #f8fafc; }
+  .quiz-option.correct { border-color: var(--green); background: var(--green-bg); color: #166534; }
+  .quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); color: #991b1b; }
+  .quiz-option .opt-letter { font-weight: 700; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .quiz-option.correct .opt-letter { background: var(--green); color: white; }
+  .quiz-option.incorrect .opt-letter { background: var(--red); color: white; }
+  .quiz-explanation { margin-top: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); font-size: 13px; color: var(--gray-600); display: none; line-height: 1.6; border-left: 3px solid var(--accent); }
+  .quiz-explanation.show { display: block; }
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+  .flow-step { background: white; border: 2px solid var(--accent); border-radius: var(--radius-sm); padding: 12px 16px; text-align: center; min-width: 110px; cursor: pointer; transition: all 0.2s; }
+  .flow-step:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .flow-step.active { background: var(--accent); color: white; }
+  .flow-step .step-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+  .flow-step .step-label { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .flow-arrow { font-size: 18px; color: var(--gray-400); padding: 0 6px; }
+  .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--gray-200); }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-dot { position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: var(--shadow); }
+  .timeline-item-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .timeline-item-desc { font-size: 13px; color: var(--gray-600); }
+  .code-block { background: var(--navy); color: #e2e8f0; padding: 16px 20px; border-radius: var(--radius-sm); font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; line-height: 1.7; overflow-x: auto; margin: 12px 0; }
+  .code-block .keyword { color: #93c5fd; }
+  .code-block .string { color: #86efac; }
+  .code-block .comment { color: #64748b; }
+  .large-metric { font-size: 32px; font-weight: 700; }
+  .progress-bar { height: 8px; background: var(--gray-200); border-radius: 4px; margin-top: 8px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 4px; transition: width 1s ease; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">Module 11</div>
+  <h1>Measure Value (ROI, Token Economics, Governance)</h1>
+  <p>Prove AI ROI, optimize token economics, and establish enterprise governance — the business case for AI investment</p>
+  <div class="header-meta">
+    <span>&#128337; 3 hours</span>
+    <span>&#128176; ROI + Token Economics</span>
+    <span>&#128295; Builds on Module 10 Agent Prism</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="active" onclick="showTab(0)">Overview</button>
+  <button onclick="showTab(1)">Token Economics</button>
+  <button onclick="showTab(2)">ROI Calculation</button>
+  <button onclick="showTab(3)">Governance</button>
+  <button onclick="showTab(4)">Executive Reporting</button>
+  <button class="quiz-tab" onclick="showTab(5)">Self-Check Quiz</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 0: Overview -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content active">
+  <div class="section-heading">Module 11 Overview</div>
+  <div class="section-sub">From measurement to value — proving AI investment is worth it</div>
+
+  <div class="highlight-box red" style="margin-bottom: 20px;">
+    <strong>The value gap:</strong> Teams use AI (Modules 01-08), review it (Module 09), and monitor it (Module 10). But can you prove it's worth the investment? Module 11 closes the loop — calculating ROI, optimizing token costs, and establishing governance that satisfies leadership and compliance.
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#9888;</div>
+        <div class="card-title">Current State</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 12px;">AI costs are visible but unoptimized. No ROI calculation. Token spending is unmanaged. Leadership asks 'is this worth it?' and teams can't answer with data.</div>
+      <div class="pill-list">
+        <span class="pill">No ROI data</span>
+        <span class="pill">Unoptimized costs</span>
+        <span class="pill">Leadership doubts</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#10003;</div>
+        <div class="card-title">Target State</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 12px;">Quantified ROI with real data. Optimized token economics. Governance that satisfies compliance. Executive-ready reporting that justifies and expands AI investment.</div>
+      <div class="pill-list">
+        <span class="pill">Proven ROI</span>
+        <span class="pill">Optimized costs</span>
+        <span class="pill">Executive buy-in</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- What this module covers -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128218;</div>
+      <div class="card-title">What This Module Covers</div>
+    </div>
+    <div class="card-desc">
+      Module 11 takes the data from Agent Prism (Module 10) and transforms it into business value: ROI calculations, token cost optimization, governance frameworks, and executive-ready reporting. This is how you justify AI investment and get leadership buy-in to expand.
+    </div>
+    <div class="pill-list" style="margin-top: 12px;">
+      <span class="pill">ROI Calculation</span>
+      <span class="pill">Token Economics</span>
+      <span class="pill">Governance Framework</span>
+      <span class="pill">Executive Reporting</span>
+      <span class="pill">Cost Optimization</span>
+      <span class="pill">Compliance</span>
+    </div>
+  </div>
+
+  <!-- The Value Chain -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128279;</div>
+      <div class="card-title">The Value Chain</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 8px;">How Module 11 connects measurement to business value:</div>
+    <div class="flow" style="margin: 16px 0;">
+      <div class="flow-step" style="border-color: var(--accent); min-width: 100px;">
+        <div class="step-num" style="color: var(--accent);">Data</div>
+        <div class="step-label">Agent Prism</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--teal); min-width: 100px;">
+        <div class="step-num" style="color: var(--teal);">Optimize</div>
+        <div class="step-label">Token Economics</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--green); min-width: 100px;">
+        <div class="step-num" style="color: var(--green);">Prove</div>
+        <div class="step-label">ROI Calculation</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--orange); min-width: 100px;">
+        <div class="step-num" style="color: var(--orange);">Manage</div>
+        <div class="step-label">Governance</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--purple); min-width: 100px;">
+        <div class="step-num" style="color: var(--purple);">Justify</div>
+        <div class="step-label">Exec Reporting</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 1: Token Economics -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Token Economics</div>
+  <div class="section-sub">Understanding and optimizing the cost of every AI interaction</div>
+
+  <div class="highlight-box blue" style="margin-bottom: 20px;">
+    <strong>Token economics = understanding and optimizing the cost of AI.</strong> Every AI interaction consumes tokens. Tokens have real costs. Token economics is about getting the most value per token spent.
+  </div>
+
+  <!-- Token Cost Formula -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128202;</div>
+      <div class="card-title">Token Cost Formula</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 12px;">The fundamental formula for calculating AI interaction costs:</div>
+    <div class="code-block">
+<span class="comment">// Token Cost Formula</span>
+COST = (input_tokens × input_price) + (output_tokens × output_price)
+
+<span class="comment">// Example Calculation</span>
+2,000 input tokens  × $0.003/1K = $0.006
+500 output tokens   × $0.015/1K = $0.0075
+<span class="string">Total per request = $0.0135</span>
+    </div>
+  </div>
+
+  <!-- Optimization Strategies -->
+  <div class="section-heading" style="font-size: 15px;">Optimization Strategies</div>
+  <div class="grid-2" style="margin-bottom: 20px;">
+    <div class="expandable" onclick="toggleExpand(this)">
+      <div class="expand-header">
+        <span><strong>Context Engineering</strong></span>
+        <span class="expand-arrow">&#9660;</span>
+      </div>
+      <div class="expand-body">
+        Right-size context for each task. Don't dump entire files when only a function is needed. Select the relevant code, include only necessary dependencies, and trim verbose comments. <strong>Result: 30-50% reduction in input tokens.</strong>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpand(this)">
+      <div class="expand-header">
+        <span><strong>Prompt Efficiency</strong></span>
+        <span class="expand-arrow">&#9660;</span>
+      </div>
+      <div class="expand-body">
+        Remove redundant instructions. Use structured prompts instead of verbose prose. Eliminate repetitive examples. Compress system prompts to essentials. <strong>Result: 20-40% token savings.</strong>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpand(this)">
+      <div class="expand-header">
+        <span><strong>Caching Strategies</strong></span>
+        <span class="expand-arrow">&#9660;</span>
+      </div>
+      <div class="expand-body">
+        Cache common prompts and responses. Reuse context across similar requests. Store frequently-used patterns. Avoid re-sending the same system prompt every time. <strong>Result: Reduces repeated token consumption.</strong>
+      </div>
+    </div>
+    <div class="expandable" onclick="toggleExpand(this)">
+      <div class="expand-header">
+        <span><strong>Model Selection</strong></span>
+        <span class="expand-arrow">&#9660;</span>
+      </div>
+      <div class="expand-body">
+        Use smaller models for simple tasks (formatting, translation, summarization). Reserve large models for complex reasoning (architecture decisions, multi-file refactoring). <strong>Result: 50-80% cost reduction for routine tasks.</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Token Waste Patterns -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#9888;</div>
+      <div class="card-title">Token Waste Patterns</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 8px;">Common patterns that waste tokens and increase costs unnecessarily:</div>
+    <table class="compare-table">
+      <tr><th>Pattern</th><th>Description</th><th>Waste</th></tr>
+      <tr>
+        <td><strong>Context Bloat</strong></td>
+        <td>Sending entire files when only a function is needed</td>
+        <td><span class="badge badge-red">30-50%</span></td>
+      </tr>
+      <tr>
+        <td><strong>Repetitive Prompts</strong></td>
+        <td>Same context sent repeatedly without caching</td>
+        <td><span class="badge badge-orange">20-40%</span></td>
+      </tr>
+      <tr>
+        <td><strong>Over-Specification</strong></td>
+        <td>Detailed instructions for simple tasks</td>
+        <td><span class="badge badge-orange">15-25%</span></td>
+      </tr>
+      <tr>
+        <td><strong>Wrong Model</strong></td>
+        <td>Using GPT-4 for formatting tasks</td>
+        <td><span class="badge badge-red">50-80%</span></td>
+      </tr>
+      <tr>
+        <td><strong>No Conversation History</strong></td>
+        <td>Restarting context each time instead of continuing conversation</td>
+        <td><span class="badge badge-orange">20-30%</span></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 2: ROI Calculation -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">ROI Calculation</div>
+  <div class="section-sub">Proving that AI investment generates positive returns</div>
+
+  <div class="highlight-box purple" style="margin-bottom: 20px;">
+    <strong>ROI = Return on Investment.</strong> For AI: (Value Created - Cost of AI) / Cost of AI. The goal is to prove that every dollar spent on AI generates more than a dollar of value.
+  </div>
+
+  <!-- ROI Formula -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128200;</div>
+      <div class="card-title">ROI Formula</div>
+    </div>
+    <div class="code-block">
+<span class="comment">// ROI Formula for AI Investment</span>
+ROI = (Time Saved × Hourly Rate - AI Cost) / AI Cost × 100%
+
+<span class="comment">// Example Calculation</span>
+Developer saves 2 hours/day × $75/hour = $150/day
+AI cost: $5/day
+<span class="string">ROI = ($150 - $5) / $5 × 100% = 2,900%</span>
+    </div>
+  </div>
+
+  <!-- ROI Components -->
+  <div class="section-heading" style="font-size: 15px;">ROI Components</div>
+  <div class="grid-3" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#9201;</div>
+        <div class="card-title">Time Savings</div>
+      </div>
+      <div class="card-desc">Measure time saved per task. Compare before/after AI adoption. Include code generation, review, testing, documentation.</div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--accent);">
+      <div class="card-header">
+        <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#10003;</div>
+        <div class="card-title">Quality Improvements</div>
+      </div>
+      <div class="card-desc">Fewer defects, less rework. Faster review cycles. Higher test coverage. Reduced technical debt.</div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--purple);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128176;</div>
+        <div class="card-title">Cost Avoidance</div>
+      </div>
+      <div class="card-desc">Reduced manual review hours. Fewer production incidents. Lower onboarding time for new developers.</div>
+    </div>
+  </div>
+
+  <!-- ROI Tracking Table -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#128202;</div>
+      <div class="card-title">ROI Tracking Table</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 8px;">Sample metrics showing AI ROI impact across a development team:</div>
+    <table class="compare-table">
+      <tr><th>Metric</th><th>Before AI</th><th>After AI</th><th>Monthly Value</th></tr>
+      <tr>
+        <td><strong>Time Saved per Dev</strong></td>
+        <td>0 hrs/day</td>
+        <td>1.5 hrs/day</td>
+        <td>$2,475/dev</td>
+      </tr>
+      <tr>
+        <td><strong>Review Cycle Time</strong></td>
+        <td>3 days</td>
+        <td>1 day</td>
+        <td>$1,200/dev</td>
+      </tr>
+      <tr>
+        <td><strong>Defect Rate</strong></td>
+        <td>15 defects/sprint</td>
+        <td>8 defects/sprint</td>
+        <td>$3,500/team</td>
+      </tr>
+      <tr>
+        <td><strong>Documentation Time</strong></td>
+        <td>4 hrs/feature</td>
+        <td>1 hr/feature</td>
+        <td>$900/feature</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- ROI Calculation Steps -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128260;</div>
+      <div class="card-title">ROI Calculation Steps</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 8px;">The process for calculating and tracking AI ROI over time:</div>
+    <div class="timeline" style="margin-top: 12px;">
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--red);"></div>
+        <div class="timeline-item-title">1. Baseline Measurement</div>
+        <div class="timeline-item-desc">Measure current state before AI adoption. Time per task, defect rates, review cycles, documentation hours. This is your starting point.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent);"></div>
+        <div class="timeline-item-title">2. AI Implementation</div>
+        <div class="timeline-item-desc">Deploy AI tools (Copilot, MCP, Studio). Train team. Establish workflows. Start the clock on measurement.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--green);"></div>
+        <div class="timeline-item-title">3. Post-Adoption Measurement</div>
+        <div class="timeline-item-desc">Measure same metrics after 30/60/90 days. Use Agent Prism data (Module 10) for continuous tracking. Compare to baseline.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--purple);"></div>
+        <div class="timeline-item-title">4. Calculate ROI</div>
+        <div class="timeline-item-desc">Apply ROI formula. Show time savings, cost avoidance, quality improvements. Quantify everything in dollars.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--teal);"></div>
+        <div class="timeline-item-title">5. Report to Leadership</div>
+        <div class="timeline-item-desc">Executive dashboard. Quarterly trends. Cost-benefit analysis. Use this to justify expanding AI investment.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 3: Governance -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Governance</div>
+  <div class="section-sub">Establishing rules, policies, and controls for enterprise AI usage</div>
+
+  <div class="highlight-box orange" style="margin-bottom: 20px;">
+    <strong>Governance = rules, policies, and controls for AI usage.</strong> Without governance, AI becomes a risk. With governance, AI becomes a managed, compliant, auditable capability.
+  </div>
+
+  <!-- Governance Framework -->
+  <div class="section-heading" style="font-size: 15px;">Governance Framework</div>
+  <div class="grid-3" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--orange);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128220;</div>
+        <div class="card-title">Policy</div>
+      </div>
+      <div class="card-desc">Define what's allowed: approved tools, usage guidelines, token budgets, data handling rules. The foundation of governance.</div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--teal);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128065;</div>
+        <div class="card-title">Monitoring</div>
+      </div>
+      <div class="card-desc">Track compliance: Agent Prism dashboards, usage reports, quality metrics. Detect deviations from policy in real-time.</div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#128680;</div>
+        <div class="card-title">Enforcement</div>
+      </div>
+      <div class="card-desc">Act on violations: alert on policy breaches, block unauthorized tools, escalate non-compliance. Governance without enforcement is just suggestions.</div>
+    </div>
+  </div>
+
+  <!-- Key Governance Policies -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128220;</div>
+      <div class="card-title">Key Governance Policies</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 8px;">Essential policies for enterprise AI governance:</div>
+    <table class="compare-table">
+      <tr><th>Policy</th><th>Description</th><th>Risk Mitigated</th></tr>
+      <tr>
+        <td><strong>Approved Tools</strong></td>
+        <td>Only pre-approved AI tools can be used in the development pipeline</td>
+        <td>Prevents shadow AI and security risks</td>
+      </tr>
+      <tr>
+        <td><strong>Token Budgets</strong></td>
+        <td>Per-team and per-developer token limits with tracking</td>
+        <td>Prevents cost overruns</td>
+      </tr>
+      <tr>
+        <td><strong>Data Handling</strong></td>
+        <td>No sensitive data in AI prompts — PII, secrets, proprietary algorithms</td>
+        <td>Protects IP and compliance</td>
+      </tr>
+      <tr>
+        <td><strong>Quality Standards</strong></td>
+        <td>Minimum quality thresholds for AI-generated code</td>
+        <td>Ensures consistent output quality</td>
+      </tr>
+      <tr>
+        <td><strong>Audit Trail</strong></td>
+        <td>Complete trace of AI-assisted changes (who, what, when)</td>
+        <td>Enables compliance and regulatory requirements</td>
+      </tr>
+      <tr>
+        <td><strong>Review Requirements</strong></td>
+        <td>Human review mandatory for all production code, including AI-generated</td>
+        <td>Prevents unreviewed AI code in production</td>
+      </tr>
+    </table>
+  </div>
+
+  <!-- Governance Workflow -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128260;</div>
+      <div class="card-title">Governance Workflow</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 8px;">How governance is established and maintained:</div>
+    <div class="flow" style="margin: 16px 0;">
+      <div class="flow-step" style="border-color: var(--orange); min-width: 100px;">
+        <div class="step-num" style="color: var(--orange);">Step 1</div>
+        <div class="step-label">Policy Defined</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--accent); min-width: 100px;">
+        <div class="step-num" style="color: var(--accent);">Step 2</div>
+        <div class="step-label">Team Trained</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--green); min-width: 100px;">
+        <div class="step-num" style="color: var(--green);">Step 3</div>
+        <div class="step-label">Tools Configured</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--teal); min-width: 100px;">
+        <div class="step-num" style="color: var(--teal);">Step 4</div>
+        <div class="step-label">Monitoring Active</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--purple); min-width: 100px;">
+        <div class="step-num" style="color: var(--purple);">Step 5</div>
+        <div class="step-label">Alerts Set</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--red); min-width: 100px;">
+        <div class="step-num" style="color: var(--red);">Step 6</div>
+        <div class="step-label">Compliance Verified</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--green); min-width: 100px;">
+        <div class="step-num" style="color: var(--green);">Step 7</div>
+        <div class="step-label">Reports Generated</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 4: Executive Reporting -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Executive Reporting</div>
+  <div class="section-sub">Translating technical metrics into business language for leadership</div>
+
+  <div class="highlight-box green" style="margin-bottom: 20px;">
+    <strong>Executive reporting = translating technical metrics into business language.</strong> Leadership doesn't care about tokens — they care about cost savings, productivity gains, and competitive advantage.
+  </div>
+
+  <!-- Key Metrics for Executives -->
+  <div class="section-heading" style="font-size: 15px;">Key Metrics for Executives</div>
+  <div class="grid-3" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#128176;</div>
+        <div class="card-title">Cost Metrics</div>
+      </div>
+      <div class="card-desc">Monthly AI spend, cost per developer, cost per feature, budget utilization. Where is the money going?</div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#128640;</div>
+        <div class="card-title">Productivity Metrics</div>
+      </div>
+      <div class="card-desc">Features shipped per sprint, time-to-market, developer velocity, review cycle time. Are we moving faster?</div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--purple);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#10003;</div>
+        <div class="card-title">Quality Metrics</div>
+      </div>
+      <div class="card-desc">Defect rate, test coverage, spec compliance, customer satisfaction. Are we building better products?</div>
+    </div>
+  </div>
+
+  <!-- Executive Dashboard Sample -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128202;</div>
+      <div class="card-title">Executive Dashboard Sample</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 16px;">A sample quarterly executive dashboard showing key AI investment metrics:</div>
+    <div class="grid-3">
+      <div class="card" style="text-align: center; padding: 24px;">
+        <div class="large-metric" style="color: var(--accent);">$2,847</div>
+        <div style="font-size: 13px; color: var(--gray-600); margin-top: 4px;">Monthly AI Cost</div>
+        <div class="progress-bar" style="margin-top: 12px;">
+          <div class="progress-fill" style="width: 65%; background: var(--accent);"></div>
+        </div>
+        <div style="font-size: 11px; color: var(--gray-400); margin-top: 4px;">65% of budget</div>
+      </div>
+      <div class="card" style="text-align: center; padding: 24px;">
+        <div class="large-metric" style="color: var(--green);">14.2K</div>
+        <div style="font-size: 13px; color: var(--gray-600); margin-top: 4px;">Features Shipped</div>
+        <div class="progress-bar" style="margin-top: 12px;">
+          <div class="progress-fill" style="width: 78%; background: var(--green);"></div>
+        </div>
+        <div style="font-size: 11px; color: var(--gray-400); margin-top: 4px;">78% of target</div>
+      </div>
+      <div class="card" style="text-align: center; padding: 24px;">
+        <div class="large-metric" style="color: var(--purple);">3.2x</div>
+        <div style="font-size: 13px; color: var(--gray-600); margin-top: 4px;">ROI Multiplier</div>
+        <div class="progress-bar" style="margin-top: 12px;">
+          <div class="progress-fill" style="width: 80%; background: var(--purple);"></div>
+        </div>
+        <div style="font-size: 11px; color: var(--gray-400); margin-top: 4px;">80% of 4x goal</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Executive Report Template -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128196;</div>
+      <div class="card-title">Executive Report Template</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 12px;">A ready-to-use quarterly report template for leadership:</div>
+    <div class="code-block">
+<span class="comment">// AI CHAMPIONS — QUARTERLY REPORT</span>
+
+<span class="keyword">INVESTMENT</span>
+  • Total AI spend: $8,541 (Q3)
+  • Per-developer cost: $449/month
+
+<span class="keyword">RETURNS</span>
+  • Time saved: 2,340 hours (Q3)
+  • Cost avoidance: $175,500
+  • Defect reduction: 38%
+
+<span class="keyword">ROI</span>
+  • Quarterly ROI: 2,900%
+  • Trend: Improving (+15% QoQ)
+
+<span class="keyword">RECOMMENDATION</span>
+  • Expand to 2 additional teams
+  • Increase token budget 20%
+  • Pilot MCP workflows (Module 07)
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 5: Self-Check Quiz -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Self-Check Quiz</div>
+  <div class="section-sub">Verify your understanding of Module 11 key concepts</div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q1.</span> What is the primary purpose of token economics?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">A</span>
+        <span>To make AI cheaper</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 1)">
+        <span class="opt-letter">B</span>
+        <span>To understand and optimize the cost of AI interactions</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">C</span>
+        <span>To count tokens in source code</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">D</span>
+        <span>To replace manual cost tracking</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-1">
+      <strong>Correct!</strong> Token economics is about understanding and optimizing the cost of every AI interaction. By right-sizing context, choosing efficient models, and caching responses, teams can reduce costs 30-50% while maintaining quality.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q2.</span> What is the ROI formula for AI investment?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">A</span>
+        <span>ROI = Cost / Time Saved</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 2)">
+        <span class="opt-letter">B</span>
+        <span>ROI = (Time Saved × Hourly Rate - AI Cost) / AI Cost × 100%</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">C</span>
+        <span>ROI = AI Cost × Time Saved</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">D</span>
+        <span>ROI = Total Tokens / Total Cost</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-2">
+      <strong>Correct!</strong> ROI measures the return on AI investment: (Value Created - Cost of AI) / Cost of AI × 100%. It compares the value of time saved and quality improvements against the cost of AI tools and tokens.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q3.</span> Which governance policy prevents "shadow AI"?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">A</span>
+        <span>Token Budgets</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">B</span>
+        <span>Quality Standards</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 3)">
+        <span class="opt-letter">C</span>
+        <span>Approved Tools Only</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">D</span>
+        <span>Audit Trail</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-3">
+      <strong>Correct!</strong> The "Approved Tools Only" policy ensures only pre-approved AI tools can be used in the development pipeline. This prevents shadow AI — unauthorized tools that bypass governance, security, and compliance controls.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q4.</span> What should executive reporting focus on?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">A</span>
+        <span>Raw token counts and technical metrics</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 4)">
+        <span class="opt-letter">B</span>
+        <span>Business outcomes: cost savings, productivity gains, and competitive advantage</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">C</span>
+        <span>Individual developer activity logs</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">D</span>
+        <span>Detailed implementation specifications</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-4">
+      <strong>Correct!</strong> Executive reporting translates technical metrics into business language. Leadership cares about cost savings, productivity gains, quality improvements, and competitive advantage — not token counts or technical specifications.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q5.</span> What is the recommended ROI target for AI investment?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">A</span>
+        <span>50% — any positive return is good</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">B</span>
+        <span>100% — break even is sufficient</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 5)">
+        <span class="opt-letter">C</span>
+        <span>200%+ — significant positive return</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">D</span>
+        <span>1000%+ — only exceptional returns matter</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-5">
+      <strong>Correct!</strong> An ROI of 200%+ means every dollar invested returns $2+ in value. This is a realistic, ambitious target that justifies continued and expanded AI investment. The cohort's early data suggests 2,900% ROI is achievable.
+    </div>
+  </div>
+
+  <div class="highlight-box purple" style="margin-top: 20px;">
+    <strong>Module 11 Complete.</strong> You now understand ROI calculation, token economics, and governance — how to prove AI investment is worth it and establish enterprise governance. Next: <strong>Module 12 — Demonstrate Adoption (Capstone, 90-Day Roadmap)</strong>.
+  </div>
+</div>
+
+<script>
+function showTab(index) {
+  document.querySelectorAll('.tab-content').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.tab-bar button').forEach((b, i) => {
+    b.classList.toggle('active', i === index);
+  });
+}
+
+function toggleExpand(el) {
+  el.classList.toggle('open');
+}
+
+function checkQuiz(option, isCorrect, qNum) {
+  const question = option.closest('.quiz-question');
+  if (question.dataset.answered) return;
+  question.dataset.answered = 'true';
+
+  const options = question.querySelectorAll('.quiz-option');
+  options.forEach(o => { o.style.pointerEvents = 'none'; });
+
+  if (isCorrect) {
+    option.classList.add('correct');
+  } else {
+    option.classList.add('incorrect');
+    options.forEach(o => {
+      if (o !== option) {
+        const onclick = o.getAttribute('onclick');
+        if (onclick && onclick.includes('true')) {
+          o.classList.add('correct');
+        }
+      }
+    });
+  }
+
+  const explanation = document.getElementById('explanation-' + qNum);
+  if (explanation) explanation.classList.add('show');
+}
+</script>
+
+</body>
+</html>

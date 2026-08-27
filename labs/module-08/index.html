@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 08 — Studio-Style Workflows</title>
+<style>
+  :root {
+    --navy: #1a2332;
+    --navy-light: #2a3a4e;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --green: #22c55e;
+    --green-bg: #f0fdf4;
+    --red: #ef4444;
+    --red-bg: #fef2f2;
+    --orange: #f59e0b;
+    --orange-bg: #fffbeb;
+    --purple: #8b5cf6;
+    --purple-bg: #f5f3ff;
+    --teal: #14b8a6;
+    --teal-bg: #f0fdfa;
+    --pink: #ec4899;
+    --pink-bg: #fdf2f8;
+    --cyan: #06b6d4;
+    --cyan-bg: #ecfeff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-800); line-height: 1.6; }
+  .header { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); color: white; padding: 28px 32px; }
+  .header-badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 14px; color: rgba(255,255,255,0.75); }
+  .header-meta { display: flex; gap: 20px; margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.6); }
+  .tab-bar { display: flex; gap: 0; background: white; border-bottom: 1px solid var(--gray-200); padding: 0 16px; overflow-x: auto; position: sticky; top: 0; z-index: 100; }
+  .tab-bar button { padding: 14px 18px; border: none; background: none; font-size: 13px; font-weight: 500; color: var(--gray-500); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-bar button:hover { color: var(--gray-700); }
+  .tab-bar button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab-bar button.quiz-tab { color: var(--purple); }
+  .tab-bar button.quiz-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+  .tab-content { display: none; padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+  .section-heading { font-size: 18px; font-weight: 700; color: var(--gray-800); margin-bottom: 6px; }
+  .section-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 20px; }
+  .card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .card-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-desc { font-size: 13px; color: var(--gray-600); line-height: 1.7; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .compare-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--gray-200); margin: 16px 0; }
+  .compare-table th { background: var(--navy); color: white; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; }
+  .compare-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--gray-100); }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: var(--gray-50); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .badge-green { background: var(--green-bg); color: #166534; }
+  .badge-orange { background: var(--orange-bg); color: #92400e; }
+  .badge-red { background: var(--red-bg); color: #991b1b; }
+  .badge-purple { background: var(--purple-bg); color: #5b21b6; }
+  .badge-teal { background: var(--teal-bg); color: #115e59; }
+  .badge-blue { background: #eff6ff; color: #1e40af; }
+  .pill-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pill { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 500; color: var(--gray-700); }
+  .expandable { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }
+  .expand-header { padding: 12px 16px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; transition: background 0.2s; }
+  .expand-header:hover { background: var(--gray-50); }
+  .expand-arrow { transition: transform 0.3s; font-size: 12px; color: var(--gray-400); }
+  .expand-body { padding: 0 16px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; font-size: 13px; color: var(--gray-600); line-height: 1.7; }
+  .expandable.open .expand-body { max-height: 600px; padding: 12px 16px; }
+  .expandable.open .expand-arrow { transform: rotate(180deg); }
+  .highlight-box { border-radius: var(--radius-sm); padding: 16px; margin: 16px 0; font-size: 13px; line-height: 1.7; }
+  .highlight-box.green { background: var(--green-bg); border-left: 4px solid var(--green); }
+  .highlight-box.orange { background: var(--orange-bg); border-left: 4px solid var(--orange); }
+  .highlight-box.red { background: var(--red-bg); border-left: 4px solid var(--red); }
+  .highlight-box.blue { background: #eff6ff; border-left: 4px solid var(--accent); }
+  .highlight-box.purple { background: var(--purple-bg); border-left: 4px solid var(--purple); }
+  .highlight-box.teal { background: var(--teal-bg); border-left: 4px solid var(--teal); }
+  .highlight-box strong { font-weight: 600; }
+  .metric-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-value { font-size: 24px; font-weight: 700; color: var(--navy); min-width: 60px; }
+  .metric-label { font-size: 13px; color: var(--gray-600); }
+  .metric-bar { height: 6px; background: var(--gray-200); border-radius: 3px; flex: 1; }
+  .metric-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .quiz-question { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .quiz-question h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; gap: 8px; }
+  .quiz-question h3 .q-num { color: var(--purple); }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option { padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: flex-start; gap: 8px; }
+  .quiz-option:hover { border-color: var(--accent); background: #f8fafc; }
+  .quiz-option.correct { border-color: var(--green); background: var(--green-bg); color: #166534; }
+  .quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); color: #991b1b; }
+  .quiz-option .opt-letter { font-weight: 700; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .quiz-option.correct .opt-letter { background: var(--green); color: white; }
+  .quiz-option.incorrect .opt-letter { background: var(--red); color: white; }
+  .quiz-explanation { margin-top: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); font-size: 13px; color: var(--gray-600); display: none; line-height: 1.6; border-left: 3px solid var(--accent); }
+  .quiz-explanation.show { display: block; }
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+  .flow-step { background: white; border: 2px solid var(--accent); border-radius: var(--radius-sm); padding: 12px 16px; text-align: center; min-width: 110px; cursor: pointer; transition: all 0.2s; }
+  .flow-step:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .flow-step.active { background: var(--accent); color: white; }
+  .flow-step .step-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+  .flow-step .step-label { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .flow-arrow { font-size: 18px; color: var(--gray-400); padding: 0 6px; }
+  .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--gray-200); }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-dot { position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: var(--shadow); }
+  .timeline-item-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .timeline-item-desc { font-size: 13px; color: var(--gray-600); }
+  .role-card { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); padding: 16px; background: white; transition: all 0.2s; cursor: pointer; }
+  .role-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .role-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px rgba(59,130,246,0.2); }
+  .role-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; margin-bottom: 10px; }
+  .role-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .role-desc { font-size: 12px; color: var(--gray-500); }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">Module 08</div>
+  <h1>Studio-Style Workflows</h1>
+  <p>Atlassian Rovo Studio — AI agents for business and program roles</p>
+  <div class="header-meta">
+    <span>&#128337; 3 hours</span>
+    <span>&#127991; Rovo Studio + Jira/Confluence</span>
+    <span>&#128295; Builds on Module 07 MCP</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="active" onclick="showTab(0)">Overview</button>
+  <button onclick="showTab(1)">Rovo Studio</button>
+  <button onclick="showTab(2)">Agent Authoring</button>
+  <button onclick="showTab(3)">Jira Integration</button>
+  <button onclick="showTab(4)">Confluence</button>
+  <button onclick="showTab(5)">Workflows</button>
+  <button class="quiz-tab" onclick="showTab(6)">Self-Check Quiz</button>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 0: Overview -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content active">
+  <div class="section-heading">Module 08 Overview</div>
+  <div class="section-sub">Studio-style workflows — extending AI to business and program roles</div>
+
+  <div class="highlight-box purple" style="margin-bottom: 20px;">
+    <strong>The bridge between engineering and program:</strong> Modules 01-07 focused on engineering teams — developers, testers, architects. Module 08 extends AI capabilities to business and program roles: product managers, program managers, scrum masters, and stakeholders who need AI assistance without writing code.
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#9888;</div>
+        <div class="card-title">Current State</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 12px;">Program roles manually triage issues, write acceptance criteria, track progress, and generate status reports. AI tools are engineering-focused — no low-code AI for non-technical roles.</div>
+      <div class="pill-list">
+        <span class="pill">Manual triage</span>
+        <span class="pill">Copy-paste status</span>
+        <span class="pill">No AI for PMs</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#10003;</div>
+        <div class="card-title">Target State</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 12px;">AI agents assist program roles: auto-triage issues, generate status reports, track metrics, surface risks. Low-code agent building — no engineering required.</div>
+      <div class="pill-list">
+        <span class="pill">AI-assisted triage</span>
+        <span class="pill">Auto status reports</span>
+        <span class="pill">Low-code agents</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Who this module is for -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128101;</div>
+      <div class="card-title">Who This Module Is For</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 12px;">While all roles benefit, this module specifically addresses the needs of non-engineering roles who interact with the development process.</div>
+    <div class="grid-3" style="margin-top: 12px;">
+      <div class="role-card" onclick="selectRole(this)">
+        <div class="role-icon" style="background: var(--purple-bg); color: var(--purple);">&#128188;</div>
+        <div class="role-title">Product Manager</div>
+        <div class="role-desc">Prioritize features, track progress, generate stakeholder updates</div>
+      </div>
+      <div class="role-card" onclick="selectRole(this)">
+        <div class="role-icon" style="background: var(--teal-bg); color: var(--teal);">&#128200;</div>
+        <div class="role-title">Program Manager</div>
+        <div class="role-desc">Track milestones, surface risks, manage cross-team dependencies</div>
+      </div>
+      <div class="role-card" onclick="selectRole(this)">
+        <div class="role-icon" style="background: var(--orange-bg); color: var(--orange);">&#127919;</div>
+        <div class="role-title">Scrum Master</div>
+        <div class="role-desc">Facilitate ceremonies, track velocity, identify blockers</div>
+      </div>
+      <div class="role-card" onclick="selectRole(this)">
+        <div class="role-icon" style="background: var(--green-bg); color: var(--green);">&#128100;</div>
+        <div class="role-title">Engineering Lead</div>
+        <div class="role-desc">Monitor team health, track quality metrics, manage technical debt</div>
+      </div>
+      <div class="role-card" onclick="selectRole(this)">
+        <div class="role-icon" style="background: var(--pink-bg); color: var(--pink);">&#128196;</div>
+        <div class="role-title">Technical Writer</div>
+        <div class="role-desc">Auto-generate docs from specs, track documentation coverage</div>
+      </div>
+      <div class="role-card" onclick="selectRole(this)">
+        <div class="role-icon" style="background: var(--cyan-bg); color: var(--cyan);">&#127915;</div>
+        <div class="role-title">Scrum Team Member</div>
+        <div class="role-desc">AI-assisted backlog grooming, sprint planning, retrospective summaries</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What this module covers -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128218;</div>
+      <div class="card-title">What This Module Covers</div>
+    </div>
+    <div class="card-desc">
+      Module 08 introduces Atlassian Rovo Studio — a low-code platform for building AI agents that integrate with Jira, Confluence, and your development workflow. You'll learn to build agents that assist program roles without requiring engineering skills.
+    </div>
+    <div class="pill-list" style="margin-top: 12px;">
+      <span class="pill">Rovo Studio</span>
+      <span class="pill">AI Agents</span>
+      <span class="pill">Jira Integration</span>
+      <span class="pill">Confluence Integration</span>
+      <span class="pill">Low-Code Building</span>
+      <span class="pill">Program Workflows</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 1: Rovo Studio -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">What is Rovo Studio?</div>
+  <div class="section-sub">Low-code AI agent building for the Atlassian ecosystem</div>
+
+  <div class="highlight-box blue" style="margin-bottom: 20px;">
+    <strong>Rovo Studio</strong> is Atlassian's platform for building AI agents that connect to Jira, Confluence, and other Atlassian products. It enables non-technical roles to create AI-powered workflows using a visual, low-code interface.
+  </div>
+
+  <!-- The analogy -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128161;</div>
+      <div class="card-title">The Low-Code Analogy</div>
+    </div>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div class="card" style="background: var(--gray-50);">
+        <div class="card-title" style="margin-bottom: 8px;">Before Low-Code</div>
+        <div class="card-desc">Building a web app required writing HTML, CSS, JavaScript. Only developers could build. Months of work for simple forms.</div>
+      </div>
+      <div class="card" style="background: var(--gray-50);">
+        <div class="card-title" style="margin-bottom: 8px;">Before Rovo Studio</div>
+        <div class="card-desc">Building an AI agent required coding APIs, authentication, data pipelines. Only engineers could build. Complex integration work.</div>
+      </div>
+      <div class="card" style="background: var(--green-bg);">
+        <div class="card-title" style="margin-bottom: 8px;">After Low-Code (Airtable, Notion)</div>
+        <div class="card-desc">Drag-and-drop interfaces. Anyone can build apps. Hours instead of months. Democratized app development.</div>
+      </div>
+      <div class="card" style="background: var(--green-bg);">
+        <div class="card-title" style="margin-bottom: 8px;">After Rovo Studio</div>
+        <div class="card-desc">Visual agent building. Anyone can create AI workflows. Connect to Jira/Confluence. No coding required. Democratized AI for program roles.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- What Rovo enables -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128640;</div>
+      <div class="card-title">What Rovo Studio Enables</div>
+    </div>
+    <div class="grid-3" style="margin-top: 12px;">
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#129302;</div>
+          <div class="card-title">AI Agents</div>
+        </div>
+        <div class="card-desc">Build custom AI agents that understand your context, access your data, and perform actions on your behalf.</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--accent);">
+        <div class="card-header">
+          <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128295;</div>
+          <div class="card-title">Tool Connectors</div>
+        </div>
+        <div class="card-desc">Pre-built connectors to Jira, Confluence, Bitbucket, and more. No API coding — just configure and connect.</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--purple);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128736;</div>
+          <div class="card-title">Visual Builder</div>
+        </div>
+        <div class="card-desc">Drag-and-drop interface for building agent workflows. No code required. Visual logic, branching, and error handling.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rovo vs MCP -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128269;</div>
+      <div class="card-title">Rovo Studio vs MCP (Module 07)</div>
+    </div>
+    <table class="compare-table" style="margin: 12px 0 0 0;">
+      <tr><th>Dimension</th><th>MCP (Module 07)</th><th>Rovo Studio (Module 08)</th></tr>
+      <tr>
+        <td><strong>Target audience</strong></td>
+        <td>Developers, engineers</td>
+        <td>Business/program roles</td>
+      </tr>
+      <tr>
+        <td><strong>Building approach</strong></td>
+        <td>Code-first (write tools, servers)</td>
+        <td>Low-code (visual builder)</td>
+      </tr>
+      <tr>
+        <td><strong>Integration scope</strong></td>
+        <td>Any tool (custom MCP servers)</td>
+        <td>Atlassian ecosystem (Jira, Confluence)</td>
+      </tr>
+      <tr>
+        <td><strong>Complexity</strong></td>
+        <td>High (requires coding)</td>
+        <td>Low (drag-and-drop)</td>
+      </tr>
+      <tr>
+        <td><strong>Use case</strong></td>
+        <td>Engineering workflows (code, test, build)</td>
+        <td>Program workflows (track, report, triage)</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 2: Agent Authoring -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Agent Authoring</div>
+  <div class="section-sub">Build AI agents without writing code</div>
+
+  <div class="highlight-box green" style="margin-bottom: 20px;">
+    <strong>Low-code agent building:</strong> Rovo Studio's visual builder lets anyone create AI agents. Define triggers, set up actions, configure data sources, and deploy — all through a visual interface. No coding required.
+  </div>
+
+  <!-- Agent anatomy -->
+  <div class="section-heading" style="font-size: 15px;">Agent Anatomy</div>
+  <div class="grid-3" style="margin-bottom: 20px;">
+    <div class="card" style="border-top: 3px solid var(--orange);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">T</div>
+        <div class="card-title">Trigger</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 8px;">What starts the agent. A Jira issue created, a Confluence page updated, a schedule, or a manual invocation.</div>
+      <div class="pill-list">
+        <span class="pill">Issue created</span>
+        <span class="pill">Page updated</span>
+        <span class="pill">Schedule</span>
+        <span class="pill">Manual</span>
+      </div>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--accent);">
+      <div class="card-header">
+        <div class="card-icon" style="background: #eff6ff; color: var(--accent);">A</div>
+        <div class="card-title">Action</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 8px;">What the agent does. Read data, generate text, update fields, send notifications, call APIs.</div>
+      <div class="pill-list">
+        <span class="pill">Read data</span>
+        <span class="pill">Generate text</span>
+        <span class="pill">Update fields</span>
+        <span class="pill">Notify</span>
+      </div>
+    </div>
+    <div class="card" style="border-top: 3px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">D</div>
+        <div class="card-title">Data Source</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 8px;">Where the agent gets context. Jira issues, Confluence pages, Bitbucket repos, custom data.</div>
+      <div class="pill-list">
+        <span class="pill">Jira issues</span>
+        <span class="pill">Confluence pages</span>
+        <span class="pill">Bitbucket repos</span>
+        <span class="pill">Custom</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Building process -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128736;</div>
+      <div class="card-title">Agent Building Process</div>
+    </div>
+    <div class="timeline" style="margin-top: 12px;">
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--orange);"></div>
+        <div class="timeline-item-title">1. Define the trigger</div>
+        <div class="timeline-item-desc">When should this agent run? On issue creation? On schedule? On page update? Choose the trigger that matches your workflow.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent);"></div>
+        <div class="timeline-item-title">2. Add data sources</div>
+        <div class="timeline-item-desc">What context does the agent need? Jira issue details? Confluence documentation? Code repository? Connect the data sources.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--green);"></div>
+        <div class="timeline-item-title">3. Configure actions</div>
+        <div class="timeline-item-desc">What should the agent do with the data? Generate a summary? Update fields? Send a notification? Set up the actions.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--purple);"></div>
+        <div class="timeline-item-title">4. Add logic/branching</div>
+        <div class="timeline-item-desc">Handle different scenarios. If priority is critical, escalate. If status is done, close. Add conditional logic.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--teal);"></div>
+        <div class="timeline-item-title">5. Test and deploy</div>
+        <div class="timeline-item-desc">Test with sample data. Verify the output. Deploy the agent. Monitor its behavior. Iterate.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Agent examples -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128736;</div>
+      <div class="card-title">Example Agents for Program Roles</div>
+    </div>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Issue Triage Agent</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Triggered when a new issue is created. Reads the issue description, analyzes priority and category, suggests assignee based on expertise, adds labels, and notifies the team lead. Reduces manual triage time.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Status Report Agent</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Runs weekly on schedule. Reads all issues in the sprint, generates a status summary (blocked items, completed items, risks), creates a Confluence page with the report, and posts a summary to Slack/Teams.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Documentation Agent</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Triggered when code is merged. Reads the PR description and changes, generates documentation updates, creates a Confluence page with the change summary, and links it to the original issue.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Risk Escalation Agent</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Monitors issue aging. If an issue has been in progress for more than N days, or if a critical issue has no activity, the agent escalates: notifies the program manager, adds a risk flag, and suggests remediation.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 3: Jira Integration -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Jira Integration</div>
+  <div class="section-sub">AI-powered project tracking and issue management</div>
+
+  <div class="highlight-box blue" style="margin-bottom: 20px;">
+    <strong>Jira is the hub.</strong> For most teams, Jira is the central project tracking tool. Rovo Studio connects AI agents directly to Jira — reading issues, updating fields, generating reports, and automating workflows.
+  </div>
+
+  <!-- What AI can do with Jira -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128640;</div>
+      <div class="card-title">AI-Powered Jira Capabilities</div>
+    </div>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Auto-Triage</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          AI reads the issue description and suggests priority, category, assignee, and labels. Based on historical patterns and team expertise. Reduces manual triage from minutes to seconds.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Smart Search</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Ask questions in natural language: "What are the blocking issues this sprint?" "Which issues are related to sensor calibration?" AI understands context and finds relevant issues.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Auto-Updates</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          AI automatically updates issue fields based on changes: if a PR is merged, update the issue status. If a test fails, add a comment. If a deadline approaches, send a reminder.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Dependency Tracking</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          AI identifies issue dependencies, detects blocked issues, and surfaces cross-team dependencies. Proactive risk identification before blockers become critical.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Jira workflow -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128260;</div>
+      <div class="card-title">AI-Enhanced Jira Workflow</div>
+    </div>
+    <div class="flow" style="margin: 16px 0;">
+      <div class="flow-step" style="border-color: var(--orange); min-width: 90px;">
+        <div class="step-num" style="color: var(--orange);">Issue</div>
+        <div class="step-label">Created</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--accent); min-width: 90px;">
+        <div class="step-num" style="color: var(--accent);">AI</div>
+        <div class="step-label">Triages</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--green); min-width: 90px;">
+        <div class="step-num" style="color: var(--green);">Assign</div>
+        <div class="step-label">Suggested</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--purple); min-width: 90px;">
+        <div class="step-num" style="color: var(--purple);">Work</div>
+        <div class="step-label">In Progress</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--teal); min-width: 90px;">
+        <div class="step-num" style="color: var(--teal);">AI</div>
+        <div class="step-label">Validates</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--green); min-width: 90px;">
+        <div class="step-num" style="color: var(--green);">Done</div>
+        <div class="step-label">Closed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Integration points -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128295;</div>
+      <div class="card-title">Key Jira Integration Points</div>
+    </div>
+    <table class="compare-table" style="margin: 12px 0 0 0;">
+      <tr><th>Jira Entity</th><th>AI Action</th><th>Benefit</th></tr>
+      <tr>
+        <td><strong>Issue</strong></td>
+        <td>Read, update, create, comment</td>
+        <td>Automated triage, status updates, documentation</td>
+      </tr>
+      <tr>
+        <td><strong>Sprint</strong></td>
+        <td>Read sprint data, generate reports</td>
+        <td>Automated sprint summaries, velocity tracking</td>
+      </tr>
+      <tr>
+        <td><strong>Board</strong></td>
+        <td>Monitor board state, surface blockers</td>
+        <td>Proactive blocker identification, risk escalation</td>
+      </tr>
+      <tr>
+        <td><strong>Project</strong></td>
+        <td>Read project config, enforce workflows</td>
+        <td>Consistent process adherence, compliance</td>
+      </tr>
+      <tr>
+        <td><strong>Custom Fields</strong></td>
+        <td>Read/write custom fields, validate data</td>
+        <td>Automated data quality, custom workflow support</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 4: Confluence -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Confluence Integration</div>
+  <div class="section-sub">AI-powered documentation and knowledge management</div>
+
+  <div class="highlight-box orange" style="margin-bottom: 20px;">
+    <strong>Knowledge silos are a top pain point.</strong> The cohort identified tribal knowledge spread across code, Jira, and individuals as a critical issue. Confluence integration addresses this by making AI-generated documentation accessible to everyone.
+  </div>
+
+  <!-- Confluence capabilities -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128640;</div>
+      <div class="card-title">AI-Powered Confluence Capabilities</div>
+    </div>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Auto-Generate Docs</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          AI reads code changes, PR descriptions, and issue context to automatically generate or update Confluence documentation. Keeps docs current without manual effort.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Knowledge Search</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Ask questions in natural language across all Confluence pages: "How does the sensor calibration work?" AI finds and summarizes relevant documentation.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Report Generation</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          AI generates status reports, sprint summaries, and project updates as Confluence pages. Pulls data from Jira, formats it, and publishes automatically.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Content Organization</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          AI categorizes pages, suggests tags, identifies outdated content, and recommends documentation gaps. Keeps the knowledge base clean and useful.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Documentation workflow -->
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128260;</div>
+      <div class="card-title">AI Documentation Workflow</div>
+    </div>
+    <div class="timeline" style="margin-top: 12px;">
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent);"></div>
+        <div class="timeline-item-title">1. Code changes merged</div>
+        <div class="timeline-item-desc">PR is merged. AI reads the PR description, commit messages, and diff to understand what changed.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--green);"></div>
+        <div class="timeline-item-title">2. AI generates documentation</div>
+        <div class="timeline-item-desc">AI creates a change summary, updates API documentation, and generates a release note draft.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--purple);"></div>
+        <div class="timeline-item-title">3. Publish to Confluence</div>
+        <div class="timeline-item-desc">AI publishes the documentation to Confluence, categorizes it, and links it to the relevant Jira issue.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--teal);"></div>
+        <div class="timeline-item-title">4. Notify stakeholders</div>
+        <div class="timeline-item-desc">AI notifies relevant team members that documentation has been updated. Links to the new page.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Benefits -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#10003;</div>
+      <div class="card-title">Benefits for Program Roles</div>
+    </div>
+    <div class="grid-3" style="margin-top: 12px;">
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--green-bg); color: var(--green);">1</div>
+          <div class="card-title">Always Current</div>
+        </div>
+        <div class="card-desc">Documentation stays up-to-date automatically. No more stale docs, no more "check the wiki" followed by outdated information.</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--accent);">
+        <div class="card-header">
+          <div class="card-icon" style="background: #eff6ff; color: var(--accent);">2</div>
+          <div class="card-title">Searchable</div>
+        </div>
+        <div class="card-desc">AI-powered search means finding information is instant. No more hunting through folders or asking "who knows about this?"</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--purple);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">3</div>
+          <div class="card-title">Reduced Silos</div>
+        </div>
+        <div class="card-desc">Knowledge is centralized and accessible. Less dependency on specific individuals, less tribal knowledge, more shared understanding.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 5: Workflows -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Studio Workflows</div>
+  <div class="section-sub">End-to-end AI workflows for program roles</div>
+
+  <div class="highlight-box purple" style="margin-bottom: 20px;">
+    <strong>Studio workflows = complete automation.</strong> Combine Jira, Confluence, and custom logic into end-to-end workflows that automate routine program tasks. From issue creation to status reports — AI handles the repetitive work.
+  </div>
+
+  <!-- Workflow examples -->
+  <div class="section-heading" style="font-size: 15px;">Common Studio Workflows</div>
+  <div class="grid-2" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--orange);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128203;</div>
+        <div class="card-title">Sprint Planning Workflow</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 8px;">Automates sprint preparation. Reads backlog, suggests sprint scope based on velocity, identifies risks, generates sprint goal draft.</div>
+      <div class="flow" style="margin: 8px 0;">
+        <div class="flow-step" style="border-color: var(--orange); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Backlog</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--accent); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Analyze</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--green); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Suggest</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--purple); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Plan</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#128202;</div>
+        <div class="card-title">Status Report Workflow</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 8px;">Generates weekly status reports. Reads sprint data, identifies blockers, calculates velocity trends, publishes to Confluence.</div>
+      <div class="flow" style="margin: 8px 0;">
+        <div class="flow-step" style="border-color: var(--green); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Jira Data</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--accent); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Analyze</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--purple); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Generate</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--teal); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Publish</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#9888;</div>
+        <div class="card-title">Risk Escalation Workflow</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 8px;">Monitors issue aging and blockers. If an issue is stuck or a deadline is at risk, AI escalates to the program manager with context.</div>
+      <div class="flow" style="margin: 8px 0;">
+        <div class="flow-step" style="border-color: var(--red); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Monitor</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--orange); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Detect</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--purple); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Escalate</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--teal); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Notify</div>
+        </div>
+      </div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--purple);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128196;</div>
+        <div class="card-title">Retrospective Workflow</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 8px;">Prepares retrospective meetings. Analyzes sprint data, identifies patterns, surfaces improvement suggestions, generates a draft retro agenda.</div>
+      <div class="flow" style="margin: 8px 0;">
+        <div class="flow-step" style="border-color: var(--purple); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Sprint Data</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--accent); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Pattern</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--green); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Suggest</div>
+        </div>
+        <div class="flow-arrow" style="font-size: 14px;">&rarr;</div>
+        <div class="flow-step" style="border-color: var(--teal); min-width: 70px; padding: 8px 10px;">
+          <div class="step-label" style="font-size: 11px;">Agenda</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Human oversight -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#9888;</div>
+      <div class="card-title">Human Oversight in Studio Workflows</div>
+    </div>
+    <div class="card-desc">
+      Just like MCP workflows (Module 07), Studio workflows keep humans in the loop. AI handles data collection, analysis, and generation. Humans review and decide.
+    </div>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div class="highlight-box green">
+        <strong>AI handles:</strong> Data aggregation, pattern recognition, report generation, status updates, dependency tracking.
+      </div>
+      <div class="highlight-box red">
+        <strong>Human decides:</strong> Sprint scope, priority changes, risk acceptance, escalation decisions, process changes.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- TAB 6: Self-Check Quiz -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<div class="tab-content">
+  <div class="section-heading">Self-Check Quiz</div>
+  <div class="section-sub">Verify your understanding of Module 08 key concepts</div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q1.</span> What is the primary audience for Rovo Studio workflows?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">A</span>
+        <span>Embedded firmware developers</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 1)">
+        <span class="opt-letter">B</span>
+        <span>Business and program roles (PMs, scrum masters, stakeholders)</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">C</span>
+        <span>DevOps engineers</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">D</span>
+        <span>Quality assurance testers</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-1">
+      <strong>Correct!</strong> Rovo Studio is designed for business and program roles — product managers, program managers, scrum masters, and stakeholders. It provides low-code AI agent building without requiring engineering skills. Modules 01-07 focus on engineering roles.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q2.</span> What is the key difference between MCP (Module 07) and Rovo Studio (Module 08)?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">A</span>
+        <span>MCP is for Jira, Rovo Studio is for GitHub</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 2)">
+        <span class="opt-letter">B</span>
+        <span>MCP is code-first for engineers, Rovo Studio is low-code for program roles</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">C</span>
+        <span>MCP is for testing, Rovo Studio is for deployment</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">D</span>
+        <span>There is no difference — they are the same tool</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-2">
+      <strong>Correct!</strong> MCP is code-first (requires writing tools and servers), targeting developers. Rovo Studio is low-code (visual builder), targeting business/program roles. MCP integrates with any tool; Rovo Studio focuses on the Atlassian ecosystem (Jira, Confluence).
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q3.</span> What are the three core components of a Rovo Studio agent?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">A</span>
+        <span>Input, processing, output</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 3)">
+        <span class="opt-letter">B</span>
+        <span>Trigger, Action, Data Source</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">C</span>
+        <span>Client, server, database</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">D</span>
+        <span>Code, test, deploy</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-3">
+      <strong>Correct!</strong> Every Rovo Studio agent has three core components: (1) Trigger — what starts the agent (issue created, schedule, etc.), (2) Action — what the agent does (read, generate, update), (3) Data Source — where the agent gets context (Jira, Confluence, custom).
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q4.</span> Which pain point from the cohort does Confluence integration directly address?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">A</span>
+        <span>Slow build/test cycles</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 4)">
+        <span class="opt-letter">B</span>
+        <span>Knowledge silos and tribal knowledge</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">C</span>
+        <span>Manual code analysis</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">D</span>
+        <span>Missing automated validation</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-4">
+      <strong>Correct!</strong> Knowledge silos were identified as Pain Point #6 — tribal knowledge spread across code, Jira, and individuals. Confluence integration addresses this by making AI-generated documentation accessible, searchable, and always current. Less dependency on specific individuals.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q5.</span> In a Studio workflow, who makes the final decisions?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">A</span>
+        <span>The AI agent — it has all the data</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 5)">
+        <span class="opt-letter">B</span>
+        <span>The human — AI assists, humans decide</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">C</span>
+        <span>The Jira workflow — if conditions are met, auto-approve</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">D</span>
+        <span>The scrum master — they delegate to AI</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-5">
+      <strong>Correct!</strong> Human oversight is non-negotiable — same principle as MCP workflows. AI handles data collection, analysis, and generation. But humans review outputs and make decisions. Sprint scope, priority changes, risk acceptance — all require human judgment.
+    </div>
+  </div>
+
+  <div class="highlight-box purple" style="margin-top: 20px;">
+    <strong>Module 08 Complete.</strong> You now understand Rovo Studio — low-code AI agent building for business and program roles. You can build agents that automate Jira triage, generate Confluence reports, and surface risks. Next: <strong>Module 09 — Automate Quality</strong> (PR/LLM-as-Judge).
+  </div>
+</div>
+
+<script>
+function showTab(index) {
+  document.querySelectorAll('.tab-content').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.tab-bar button').forEach((b, i) => {
+    b.classList.toggle('active', i === index);
+  });
+}
+
+function toggleExpand(el) {
+  el.classList.toggle('open');
+}
+
+function selectRole(el) {
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  el.classList.add('selected');
+}
+
+function checkQuiz(option, isCorrect, qNum) {
+  const question = option.closest('.quiz-question');
+  if (question.dataset.answered) return;
+  question.dataset.answered = 'true';
+
+  const options = question.querySelectorAll('.quiz-option');
+  options.forEach(o => { o.style.pointerEvents = 'none'; });
+
+  if (isCorrect) {
+    option.classList.add('correct');
+  } else {
+    option.classList.add('incorrect');
+    options.forEach(o => {
+      if (o !== option) {
+        const onclick = o.getAttribute('onclick');
+        if (onclick && onclick.includes('true')) {
+          o.classList.add('correct');
+        }
+      }
+    });
+  }
+
+  const explanation = document.getElementById('explanation-' + qNum);
+  if (explanation) explanation.classList.add('show');
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,893 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Module 09 — Automate Quality (PR/LLM-as-Judge)</title>
+<style>
+  :root {
+    --navy: #1a2332;
+    --navy-light: #2a3a4e;
+    --accent: #3b82f6;
+    --accent-hover: #2563eb;
+    --green: #22c55e;
+    --green-bg: #f0fdf4;
+    --red: #ef4444;
+    --red-bg: #fef2f2;
+    --orange: #f59e0b;
+    --orange-bg: #fffbeb;
+    --purple: #8b5cf6;
+    --purple-bg: #f5f3ff;
+    --teal: #14b8a6;
+    --teal-bg: #f0fdfa;
+    --pink: #ec4899;
+    --pink-bg: #fdf2f8;
+    --cyan: #06b6d4;
+    --cyan-bg: #ecfeff;
+    --gray-50: #f9fafb;
+    --gray-100: #f3f4f6;
+    --gray-200: #e5e7eb;
+    --gray-300: #d1d5db;
+    --gray-400: #9ca3af;
+    --gray-500: #6b7280;
+    --gray-600: #4b5563;
+    --gray-700: #374151;
+    --gray-800: #1f2937;
+    --radius: 12px;
+    --radius-sm: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--gray-50); color: var(--gray-800); line-height: 1.6; }
+  .header { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-light) 100%); color: white; padding: 28px 32px; }
+  .header-badge { display: inline-block; background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 14px; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 10px; }
+  .header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .header p { font-size: 14px; color: rgba(255,255,255,0.75); }
+  .header-meta { display: flex; gap: 20px; margin-top: 12px; font-size: 13px; color: rgba(255,255,255,0.6); }
+  .tab-bar { display: flex; gap: 0; background: white; border-bottom: 1px solid var(--gray-200); padding: 0 16px; overflow-x: auto; position: sticky; top: 0; z-index: 100; }
+  .tab-bar button { padding: 14px 18px; border: none; background: none; font-size: 13px; font-weight: 500; color: var(--gray-500); cursor: pointer; white-space: nowrap; border-bottom: 2px solid transparent; transition: all 0.2s; }
+  .tab-bar button:hover { color: var(--gray-700); }
+  .tab-bar button.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+  .tab-bar button.quiz-tab { color: var(--purple); }
+  .tab-bar button.quiz-tab.active { color: var(--purple); border-bottom-color: var(--purple); }
+  .tab-content { display: none; padding: 24px 32px; max-width: 1200px; margin: 0 auto; }
+  .tab-content.active { display: block; }
+  .section-heading { font-size: 18px; font-weight: 700; color: var(--gray-800); margin-bottom: 6px; }
+  .section-sub { font-size: 14px; color: var(--gray-500); margin-bottom: 20px; }
+  .card { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .card-header { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+  .card-icon { width: 36px; height: 36px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .card-title { font-size: 15px; font-weight: 600; }
+  .card-desc { font-size: 13px; color: var(--gray-600); line-height: 1.7; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; }
+  @media (max-width: 768px) { .grid-2, .grid-3 { grid-template-columns: 1fr; } }
+  .compare-table { width: 100%; border-collapse: separate; border-spacing: 0; border-radius: var(--radius); overflow: hidden; border: 1px solid var(--gray-200); margin: 16px 0; }
+  .compare-table th { background: var(--navy); color: white; padding: 12px 16px; text-align: left; font-size: 13px; font-weight: 600; }
+  .compare-table td { padding: 10px 16px; font-size: 13px; border-bottom: 1px solid var(--gray-100); }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: var(--gray-50); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; }
+  .badge-green { background: var(--green-bg); color: #166534; }
+  .badge-orange { background: var(--orange-bg); color: #92400e; }
+  .badge-red { background: var(--red-bg); color: #991b1b; }
+  .badge-purple { background: var(--purple-bg); color: #5b21b6; }
+  .badge-teal { background: var(--teal-bg); color: #115e59; }
+  .badge-blue { background: #eff6ff; color: #1e40af; }
+  .pill-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .pill { background: var(--gray-100); border: 1px solid var(--gray-200); border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 500; color: var(--gray-700); }
+  .expandable { border: 1px solid var(--gray-200); border-radius: var(--radius-sm); margin-bottom: 10px; overflow: hidden; }
+  .expand-header { padding: 12px 16px; background: white; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; transition: background 0.2s; }
+  .expand-header:hover { background: var(--gray-50); }
+  .expand-arrow { transition: transform 0.3s; font-size: 12px; color: var(--gray-400); }
+  .expand-body { padding: 0 16px; max-height: 0; overflow: hidden; transition: max-height 0.3s ease, padding 0.3s ease; font-size: 13px; color: var(--gray-600); line-height: 1.7; }
+  .expandable.open .expand-body { max-height: 600px; padding: 12px 16px; }
+  .expandable.open .expand-arrow { transform: rotate(180deg); }
+  .highlight-box { border-radius: var(--radius-sm); padding: 16px; margin: 16px 0; font-size: 13px; line-height: 1.7; }
+  .highlight-box.green { background: var(--green-bg); border-left: 4px solid var(--green); }
+  .highlight-box.orange { background: var(--orange-bg); border-left: 4px solid var(--orange); }
+  .highlight-box.red { background: var(--red-bg); border-left: 4px solid var(--red); }
+  .highlight-box.blue { background: #eff6ff; border-left: 4px solid var(--accent); }
+  .highlight-box.purple { background: var(--purple-bg); border-left: 4px solid var(--purple); }
+  .highlight-box.teal { background: var(--teal-bg); border-left: 4px solid var(--teal); }
+  .highlight-box strong { font-weight: 600; }
+  .metric-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--gray-100); }
+  .metric-row:last-child { border-bottom: none; }
+  .metric-value { font-size: 24px; font-weight: 700; color: var(--navy); min-width: 60px; }
+  .metric-label { font-size: 13px; color: var(--gray-600); }
+  .metric-bar { height: 6px; background: var(--gray-200); border-radius: 3px; flex: 1; }
+  .metric-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
+  .quiz-question { background: white; border: 1px solid var(--gray-200); border-radius: var(--radius); padding: 20px; margin-bottom: 16px; }
+  .quiz-question h3 { font-size: 14px; font-weight: 600; margin-bottom: 14px; display: flex; gap: 8px; }
+  .quiz-question h3 .q-num { color: var(--purple); }
+  .quiz-options { display: flex; flex-direction: column; gap: 8px; }
+  .quiz-option { padding: 10px 14px; border: 1px solid var(--gray-200); border-radius: var(--radius-sm); cursor: pointer; font-size: 13px; transition: all 0.2s; display: flex; align-items: flex-start; gap: 8px; }
+  .quiz-option:hover { border-color: var(--accent); background: #f8fafc; }
+  .quiz-option.correct { border-color: var(--green); background: var(--green-bg); color: #166534; }
+  .quiz-option.incorrect { border-color: var(--red); background: var(--red-bg); color: #991b1b; }
+  .quiz-option .opt-letter { font-weight: 700; flex-shrink: 0; width: 22px; height: 22px; border-radius: 50%; background: var(--gray-100); display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .quiz-option.correct .opt-letter { background: var(--green); color: white; }
+  .quiz-option.incorrect .opt-letter { background: var(--red); color: white; }
+  .quiz-explanation { margin-top: 12px; padding: 12px; background: var(--gray-50); border-radius: var(--radius-sm); font-size: 13px; color: var(--gray-600); display: none; line-height: 1.6; border-left: 3px solid var(--accent); }
+  .quiz-explanation.show { display: block; }
+  .flow { display: flex; align-items: center; gap: 0; flex-wrap: wrap; justify-content: center; margin: 20px 0; }
+  .flow-step { background: white; border: 2px solid var(--accent); border-radius: var(--radius-sm); padding: 12px 16px; text-align: center; min-width: 110px; cursor: pointer; transition: all 0.2s; }
+  .flow-step:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+  .flow-step.active { background: var(--accent); color: white; }
+  .flow-step .step-num { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.7; }
+  .flow-step .step-label { font-size: 13px; font-weight: 600; margin-top: 2px; }
+  .flow-arrow { font-size: 18px; color: var(--gray-400); padding: 0 6px; }
+  .timeline { position: relative; padding-left: 28px; margin: 16px 0; }
+  .timeline::before { content: ''; position: absolute; left: 10px; top: 0; bottom: 0; width: 2px; background: var(--gray-200); }
+  .timeline-item { position: relative; margin-bottom: 20px; }
+  .timeline-dot { position: absolute; left: -24px; top: 4px; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: var(--shadow); }
+  .timeline-item-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+  .timeline-item-desc { font-size: 13px; color: var(--gray-600); }
+  .code-block { background: var(--gray-800); color: #e2e8f0; padding: 14px 16px; border-radius: var(--radius-sm); font-family: 'SF Mono', Monaco, monospace; font-size: 12px; line-height: 1.6; overflow-x: auto; margin: 12px 0; }
+  .code-block .comment { color: #94a3b8; }
+  .code-block .keyword { color: #c084fc; }
+  .code-block .string { color: #86efac; }
+  .code-block .func { color: #93c5fd; }
+  .code-block .type { color: #fbbf24; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-badge">Module 09</div>
+  <h1>Automate Quality (PR / LLM-as-Judge)</h1>
+  <p>Automated PR review, quality gates, and LLM-as-Judge — closing the loop on AI-generated code quality</p>
+  <div class="header-meta">
+    <span>&#128337; 3 hours</span>
+    <span>&#9989; PR Automation + LLM-as-Judge</span>
+    <span>&#128295; Builds on Module 08 Studio</span>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="active" onclick="showTab(0)">Overview</button>
+  <button onclick="showTab(1)">PR Automation</button>
+  <button onclick="showTab(2)">LLM-as-Judge</button>
+  <button onclick="showTab(3)">Quality Gates</button>
+  <button onclick="showTab(4)">Non-Functional Criteria</button>
+  <button class="quiz-tab" onclick="showTab(5)">Self-Check Quiz</button>
+</div>
+
+<!-- TAB 0: Overview -->
+<div class="tab-content active">
+  <div class="section-heading">Module 09 Overview</div>
+  <div class="section-sub">Automate PR quality — the critical gap between code generation and code delivery</div>
+
+  <div class="highlight-box red" style="margin-bottom: 20px;">
+    <strong>The quality gap:</strong> Modules 01-08 teach you to generate and implement code with AI. But who reviews the AI-generated code? Module 09 closes this gap — automating PR quality checks and using LLM-as-Judge to enforce standards, catch defects, and verify non-functional criteria before human review.
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#9888;</div>
+        <div class="card-title">Current State</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 12px;">AI generates code, but PR review is manual. No automated quality gates. No verification of non-functional criteria. Human reviewers spend time on style checks instead of design review.</div>
+      <div class="pill-list">
+        <span class="pill">Manual PR review</span>
+        <span class="pill">No quality gates</span>
+        <span class="pill">Style drift</span>
+      </div>
+    </div>
+
+    <div class="card" style="border-left: 4px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#10003;</div>
+        <div class="card-title">Target State</div>
+      </div>
+      <div class="card-desc" style="margin-bottom: 12px;">Automated quality gates enforce standards on every PR. LLM-as-Judge reviews non-functional criteria. Human reviewers focus on design, architecture, and edge cases only.</div>
+      <div class="pill-list">
+        <span class="pill">Automated gates</span>
+        <span class="pill">LLM-as-Judge</span>
+        <span class="pill">Human-on-design</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128218;</div>
+      <div class="card-title">What This Module Covers</div>
+    </div>
+    <div class="card-desc">
+      Module 09 introduces automated PR quality workflows and LLM-as-Judge — using AI to review AI-generated code. You'll learn to set up quality gates, define review criteria, and build automated pipelines that enforce coding standards, test coverage, and non-functional requirements before human review.
+    </div>
+    <div class="pill-list" style="margin-top: 12px;">
+      <span class="pill">PR Automation</span>
+      <span class="pill">LLM-as-Judge</span>
+      <span class="pill">Quality Gates</span>
+      <span class="pill">Non-Functional Criteria</span>
+      <span class="pill">CI/CD Integration</span>
+      <span class="pill">Human-in-the-Loop</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128260;</div>
+      <div class="card-title">The Quality Pipeline Flow</div>
+    </div>
+    <div class="flow" style="margin: 16px 0;">
+      <div class="flow-step" style="border-color: var(--accent); min-width: 90px;">
+        <div class="step-num" style="color: var(--accent);">Code</div>
+        <div class="step-label">Generated</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--orange); min-width: 90px;">
+        <div class="step-num" style="color: var(--orange);">Lint</div>
+        <div class="step-label">Automated</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--purple); min-width: 90px;">
+        <div class="step-num" style="color: var(--purple);">LLM</div>
+        <div class="step-label">Judge Reviews</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--teal); min-width: 90px;">
+        <div class="step-num" style="color: var(--teal);">Gates</div>
+        <div class="step-label">Enforced</div>
+      </div>
+      <div class="flow-arrow">&rarr;</div>
+      <div class="flow-step" style="border-color: var(--green); min-width: 90px;">
+        <div class="step-num" style="color: var(--green);">Human</div>
+        <div class="step-label">Design Review</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 1: PR Automation -->
+<div class="tab-content">
+  <div class="section-heading">PR Automation</div>
+  <div class="section-sub">Automate the routine parts of PR review — let humans focus on design</div>
+
+  <div class="highlight-box blue" style="margin-bottom: 20px;">
+    <strong>PR automation = faster reviews, fewer defects.</strong> Automated checks run on every PR: linting, test coverage, style compliance, security scanning. Only design-level issues reach human reviewers. This is how you scale review quality across a team.
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128640;</div>
+      <div class="card-title">What PR Automation Covers</div>
+    </div>
+    <div class="grid-3" style="margin-top: 12px;">
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#9989;</div>
+          <div class="card-title">Static Analysis</div>
+        </div>
+        <div class="card-desc">Linting, formatting, complexity analysis, dead code detection. Catches style and structural issues automatically.</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--accent);">
+        <div class="card-header">
+          <div class="card-icon" style="background: #eff6ff; color: var(--accent);">&#128202;</div>
+          <div class="card-title">Test Verification</div>
+        </div>
+        <div class="card-desc">Verify tests pass, check coverage thresholds, validate test-to-spec mapping. Every PR must have test evidence.</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--purple);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128737;</div>
+          <div class="card-title">Security Scanning</div>
+        </div>
+        <div class="card-desc">SAST, dependency scanning, secret detection. Catch vulnerabilities before code is merged.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128260;</div>
+      <div class="card-title">Automated PR Workflow</div>
+    </div>
+    <div class="timeline" style="margin-top: 12px;">
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--accent);"></div>
+        <div class="timeline-item-title">1. Developer pushes code</div>
+        <div class="timeline-item-desc">PR is created (manually or via MCP workflow from Module 07). Automated checks trigger immediately.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--green);"></div>
+        <div class="timeline-item-title">2. Static analysis runs</div>
+        <div class="timeline-item-desc">Linting, formatting, complexity checks. Results posted as PR comments. Pass/fail gates enforced.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--orange);"></div>
+        <div class="timeline-item-title">3. Tests execute</div>
+        <div class="timeline-item-desc">Full test suite runs. Coverage report generated. Regression check against baseline.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--purple);"></div>
+        <div class="timeline-item-title">4. LLM-as-Judge reviews</div>
+        <div class="timeline-item-desc">AI reviews the diff for design patterns, non-functional criteria, and spec compliance. Results posted.</div>
+      </div>
+      <div class="timeline-item">
+        <div class="timeline-dot" style="background: var(--teal);"></div>
+        <div class="timeline-item-title">5. Human reviews design</div>
+        <div class="timeline-item-desc">Human reviewer sees all automated results and focuses on architecture, design decisions, and edge cases.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128295;</div>
+      <div class="card-title">CI/CD Integration Points</div>
+    </div>
+    <table class="compare-table" style="margin: 12px 0 0 0;">
+      <tr><th>Stage</th><th>Tool</th><th>Gate</th><th>On Failure</th></tr>
+      <tr>
+        <td><strong>Commit</strong></td>
+        <td>Pre-commit hooks</td>
+        <td>Lint + format</td>
+        <td>Block commit</td>
+      </tr>
+      <tr>
+        <td><strong>PR Create</strong></td>
+        <td>GitHub Actions / CI</td>
+        <td>Build + unit tests</td>
+        <td>Block merge</td>
+      </tr>
+      <tr>
+        <td><strong>PR Review</strong></td>
+        <td>LLM-as-Judge</td>
+        <td>Quality + NFR check</td>
+        <td>Post review comments</td>
+      </tr>
+      <tr>
+        <td><strong>Pre-Merge</strong></td>
+        <td>Full regression</td>
+        <td>100% pass + coverage</td>
+        <td>Block merge</td>
+      </tr>
+      <tr>
+        <td><strong>Post-Merge</strong></td>
+        <td>Deploy validation</td>
+        <td>Smoke tests</td>
+        <td>Auto-rollback</td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+<!-- TAB 2: LLM-as-Judge -->
+<div class="tab-content">
+  <div class="section-heading">LLM-as-Judge</div>
+  <div class="section-sub">Using AI to review AI-generated code — scalable, consistent, tireless</div>
+
+  <div class="highlight-box purple" style="margin-bottom: 20px;">
+    <strong>LLM-as-Judge = AI reviewing AI.</strong> A separate LLM reviews the code diff against defined criteria: coding standards, design patterns, spec compliance, non-functional requirements. It provides structured feedback that human reviewers can act on.
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#129302;</div>
+      <div class="card-title">How LLM-as-Judge Works</div>
+    </div>
+    <div class="code-block"><span class="comment">// LLM-as-Judge Review Prompt</span>
+
+<span class="keyword">INPUT:</span>
+  <span class="type">diff</span> = the code changes in this PR
+  <span class="type">spec</span> = the specification for this feature
+  <span class="type">standards</span> = coding standards for the project
+  <span class="type">nfr</span> = non-functional requirements checklist
+
+<span class="keyword">TASK:</span>
+  Review the diff against each criterion:
+  <span class="string">1. Does the code match the spec?</span>
+  <span class="string">2. Does it follow coding standards?</span>
+  <span class="string">3. Are non-functional criteria met?</span>
+  <span class="string">4. Are there any defect patterns?</span>
+  <span class="string">5. Is test coverage adequate?</span>
+
+<span class="keyword">OUTPUT:</span>
+  <span class="func">score</span> per criterion (PASS/WARN/FAIL)
+  <span class="func">explanation</span> for each result
+  <span class="func">recommendations</span> for improvements</div>
+  </div>
+
+  <div class="grid-2" style="margin-bottom: 20px;">
+    <div class="card" style="border-left: 4px solid var(--green);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#10003;</div>
+        <div class="card-title">Advantages</div>
+      </div>
+      <div class="card-desc">
+        <ul style="margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.8;">
+          <li>Reviews every PR consistently — no fatigue</li>
+          <li>Catches patterns humans miss in large diffs</li>
+          <li>Enforces non-functional criteria every time</li>
+          <li>Provides structured, actionable feedback</li>
+          <li>Scales to any number of PRs</li>
+        </ul>
+      </div>
+    </div>
+    <div class="card" style="border-left: 4px solid var(--red);">
+      <div class="card-header">
+        <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#9888;</div>
+        <div class="card-title">Limitations</div>
+      </div>
+      <div class="card-desc">
+        <ul style="margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.8;">
+          <li>Cannot replace human judgment on design</li>
+          <li>May produce false positives on edge cases</li>
+          <li>Requires well-defined review criteria</li>
+          <li>Doesn't understand business context</li>
+          <li>Must be configured per project/domain</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128269;</div>
+      <div class="card-title">Review Criteria Categories</div>
+    </div>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Coding Standards</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Naming conventions, formatting, comment style, header guards, file organization. Catches style drift that linters can't fully enforce. Ensures consistency across AI-generated and human-written code.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Design Patterns</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Correct use of design patterns, appropriate abstraction levels, proper error handling patterns, state machine correctness. The LLM can compare the code against known good patterns for the domain.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Spec Compliance</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Verify the implementation matches the specification from Module 04. Check that all acceptance criteria are addressed, interfaces match the spec, and behavior aligns with requirements.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Defect Patterns</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Common embedded defects: buffer overflows, null pointer dereferences, race conditions, resource leaks, incorrect timeout handling, missing bounds checks. Pattern-based detection catches known bug classes.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 3: Quality Gates -->
+<div class="tab-content">
+  <div class="section-heading">Quality Gates</div>
+  <div class="section-sub">Define, enforce, and measure — every PR must pass before merge</div>
+
+  <div class="highlight-box green" style="margin-bottom: 20px;">
+    <strong>Quality gates = non-negotiable standards.</strong> Every PR must pass defined quality gates before merge. No exceptions, no overrides without approval. This is how you maintain consistent quality across a team, even when AI generates the code.
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#128737;</div>
+      <div class="card-title">Quality Gate Categories</div>
+    </div>
+    <table class="compare-table" style="margin: 12px 0 0 0;">
+      <tr><th>Gate</th><th>What It Checks</th><th>Tool</th><th>Threshold</th></tr>
+      <tr>
+        <td><strong>Build</strong></td>
+        <td>Code compiles without errors or warnings</td>
+        <td>Compiler + CI</td>
+        <td>Zero errors, zero warnings</td>
+      </tr>
+      <tr>
+        <td><strong>Lint</strong></td>
+        <td>Coding standards compliance</td>
+        <td>Clang-Tidy / ESLint</td>
+        <td>Zero violations</td>
+      </tr>
+      <tr>
+        <td><strong>Tests</strong></td>
+        <td>All tests pass, coverage meets threshold</td>
+        <td>Test runner + coverage</td>
+        <td>100% pass, 80%+ coverage</td>
+      </tr>
+      <tr>
+        <td><strong>Security</strong></td>
+        <td>No known vulnerabilities</td>
+        <td>SAST / dependency scan</td>
+        <td>Zero high/critical</td>
+      </tr>
+      <tr>
+        <td><strong>Spec</strong></td>
+        <td>Implementation matches specification</td>
+        <td>LLM-as-Judge</td>
+        <td>All criteria PASS</td>
+      </tr>
+      <tr>
+        <td><strong>NFR</strong></td>
+        <td>Non-functional requirements met</td>
+        <td>LLM-as-Judge + static analysis</td>
+        <td>No FAIL on NFR checklist</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#128200;</div>
+      <div class="card-title">Gate Enforcement Levels</div>
+    </div>
+    <div class="grid-3" style="margin-top: 12px;">
+      <div class="card" style="border-top: 3px solid var(--red);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--red-bg); color: var(--red);">&#128683;</div>
+          <div class="card-title">Block</div>
+        </div>
+        <div class="card-desc">PR cannot merge. Build errors, test failures, critical security issues. Must be fixed before any progress.</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--orange);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#9888;</div>
+          <div class="card-title">Warn</div>
+        </div>
+        <div class="card-desc">PR can merge with approval. Coverage below threshold, non-critical lint warnings. Requires tech lead sign-off.</div>
+      </div>
+      <div class="card" style="border-top: 3px solid var(--green);">
+        <div class="card-header">
+          <div class="card-icon" style="background: var(--green-bg); color: var(--green);">&#9989;</div>
+          <div class="card-title">Info</div>
+        </div>
+        <div class="card-desc">PR can merge freely. Suggestions, best practices, documentation improvements. Informational only.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128260;</div>
+      <div class="card-title">Gate Configuration Example</div>
+    </div>
+    <div class="code-block"><span class="comment"># quality-gates.yml — PR quality gate configuration</span>
+
+<span class="keyword">gates:</span>
+  <span class="func">build:</span>
+    <span class="type">action:</span> <span class="string">block</span>
+    <span class="type">threshold:</span> <span class="string">zero_errors</span>
+
+  <span class="func">tests:</span>
+    <span class="type">action:</span> <span class="string">block</span>
+    <span class="type">pass_rate:</span> <span class="string">100%</span>
+    <span class="type">coverage:</span> <span class="string">80%</span>
+
+  <span class="func">lint:</span>
+    <span class="type">action:</span> <span class="string">block</span>
+    <span class="type">violations:</span> <span class="string">0</span>
+
+  <span class="func">security:</span>
+    <span class="type">action:</span> <span class="string">block</span>
+    <span class="type">high_critical:</span> <span class="string">0</span>
+
+  <span class="func">spec_compliance:</span>
+    <span class="type">action:</span> <span class="string">warn</span>
+    <span class="type">tool:</span> <span class="string">llm-as-judge</span>
+    <span class="type">criteria:</span> <span class="string">all_acceptance_criteria</span>
+
+  <span class="func">nfr_check:</span>
+    <span class="type">action:</span> <span class="string">warn</span>
+    <span class="type">tool:</span> <span class="string">llm-as-judge</span>
+    <span class="type">criteria:</span> <span class="string">nfr_checklist</span></div>
+  </div>
+</div>
+
+<!-- TAB 4: Non-Functional Criteria -->
+<div class="tab-content">
+  <div class="section-heading">Non-Functional Criteria</div>
+  <div class="section-sub">The criteria that separate working code from production-ready code</div>
+
+  <div class="highlight-box orange" style="margin-bottom: 20px;">
+    <strong>Non-functional criteria (NFRs)</strong> are the requirements that don't describe what the code does, but how it does it: performance, memory usage, security, maintainability, reliability. These are the hardest to verify automatically — and the most important for embedded systems.
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--orange-bg); color: var(--orange);">&#128203;</div>
+      <div class="card-title">NFR Checklist for Embedded Systems</div>
+    </div>
+    <table class="compare-table" style="margin: 12px 0 0 0;">
+      <tr><th>NFR Category</th><th>Criteria</th><th>Verification Method</th></tr>
+      <tr>
+        <td><strong>Performance</strong></td>
+        <td>Worst-case execution time within budget</td>
+        <td>Profiling + static analysis</td>
+      </tr>
+      <tr>
+        <td><strong>Memory</strong></td>
+        <td>Stack/heap usage within limits, no leaks</td>
+        <td>Static analysis + runtime tools</td>
+      </tr>
+      <tr>
+        <td><strong>Security</strong></td>
+        <td>No buffer overflows, no injection, no secrets in code</td>
+        <td>SAST + secret scanning</td>
+      </tr>
+      <tr>
+        <td><strong>Reliability</strong></td>
+        <td>Error handling, graceful degradation, watchdog compliance</td>
+        <td>LLM-as-Judge + code review</td>
+      </tr>
+      <tr>
+        <td><strong>Maintainability</strong></td>
+        <td>Low complexity, clear naming, adequate comments</td>
+        <td>Static analysis + LLM-as-Judge</td>
+      </tr>
+      <tr>
+        <td><strong>Portability</strong></td>
+        <td>No platform-specific code without guards</td>
+        <td>LLM-as-Judge + build matrix</td>
+      </tr>
+      <tr>
+        <td><strong>Testability</strong></td>
+        <td>Functions are testable in isolation, no global state</td>
+        <td>LLM-as-Judge + coverage analysis</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="card" style="margin-bottom: 20px;">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--purple-bg); color: var(--purple);">&#129302;</div>
+      <div class="card-title">LLM-as-Judge NFR Review</div>
+    </div>
+    <div class="card-desc" style="margin-bottom: 12px;">The LLM reviews each NFR category against the code diff. For each criterion, it provides a PASS/WARN/FAIL rating with explanation.</div>
+    <div class="code-block"><span class="comment">// Example NFR review output</span>
+
+<span class="keyword">Performance:</span>  <span class="func">PASS</span>  — No loops with unbounded iteration
+<span class="keyword">Memory:</span>       <span class="func">WARN</span> — Large stack allocation in sensor_poll_all()
+<span class="keyword">Security:</span>     <span class="func">PASS</span>  — No buffer operations without bounds checking
+<span class="keyword">Reliability:</span>  <span class="func">FAIL</span> — Missing error handling for UART timeout
+<span class="keyword">Maintainability:</span> <span class="func">PASS</span> — Functions under 50 lines, clear naming
+<span class="keyword">Portability:</span>  <span class="func">PASS</span> — Platform code properly guarded
+<span class="keyword">Testability:</span> <span class="func">PASS</span> — All functions have corresponding test cases
+
+<span class="comment">// RESULT: 1 FAIL, 1 WARN — requires fixes before merge</span></div>
+  </div>
+
+  <div class="card">
+    <div class="card-header">
+      <div class="card-icon" style="background: var(--teal-bg); color: var(--teal);">&#128161;</div>
+      <div class="card-title">Best Practices for NFR Enforcement</div>
+    </div>
+    <div class="grid-2" style="margin-top: 12px;">
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Start with the Cohort's Consensus</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          The cohort identified memory usage, design pattern conformance, and timing constraints as the NFRs most commonly missed in review. Start with these three — they're the highest-value gates.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Iterate on Criteria</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Start with a small set of NFRs and expand over time. Each false positive is a tuning opportunity. The goal is high signal-to-noise, not maximum coverage on day one.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Combine Automated + LLM</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          Use static analysis for measurable criteria (memory, complexity). Use LLM-as-Judge for subjective criteria (design patterns, maintainability). Each tool covers the other's blind spots.
+        </div>
+      </div>
+      <div class="expandable" onclick="toggleExpand(this)">
+        <div class="expand-header">
+          <span><strong>Feed Back into Specs</strong></span>
+          <span class="expand-arrow">&#9660;</span>
+        </div>
+        <div class="expand-body">
+          When LLM-as-Judge finds a NFR violation, update the specification to include that NFR as an acceptance criterion. This closes the loop: NFRs become part of the spec, which triggers tests, which are verified by quality gates.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TAB 5: Self-Check Quiz -->
+<div class="tab-content">
+  <div class="section-heading">Self-Check Quiz</div>
+  <div class="section-sub">Verify your understanding of Module 09 key concepts</div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q1.</span> What is the primary role of LLM-as-Judge in the PR review process?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">A</span>
+        <span>Replace human reviewers entirely</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 1)">
+        <span class="opt-letter">B</span>
+        <span>Review code against defined criteria, freeing humans for design review</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">C</span>
+        <span>Generate the code that needs reviewing</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 1)">
+        <span class="opt-letter">D</span>
+        <span>Write test cases for the PR</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-1">
+      <strong>Correct!</strong> LLM-as-Judge reviews code against defined criteria (standards, NFRs, spec compliance) and provides structured feedback. It handles the routine checks so human reviewers can focus on design, architecture, and edge cases.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q2.</span> Which quality gate action means "PR can merge with approval"?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">A</span>
+        <span>Block</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 2)">
+        <span class="opt-letter">B</span>
+        <span>Warn</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">C</span>
+        <span>Info</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 2)">
+        <span class="opt-letter">D</span>
+        <span>Pass</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-2">
+      <strong>Correct!</strong> Quality gates have three levels: Block (cannot merge), Warn (can merge with tech lead approval), and Info (can merge freely). Warn is used for non-critical issues like coverage below threshold or non-critical lint warnings.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q3.</span> What are non-functional criteria (NFRs)?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">A</span>
+        <span>Requirements that describe what the code does</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">B</span>
+        <span>Requirements for code formatting and naming</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 3)">
+        <span class="opt-letter">C</span>
+        <span>Requirements about how the code performs (performance, security, memory)</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 3)">
+        <span class="opt-letter">D</span>
+        <span>Requirements for test coverage</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-3">
+      <strong>Correct!</strong> NFRs describe how the code performs rather than what it does: performance (execution time), memory usage, security, reliability, maintainability, and portability. These are critical for embedded systems and hardest to verify automatically.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q4.</span> In the automated PR workflow, what runs immediately after the developer pushes code?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, true, 4)">
+        <span class="opt-letter">A</span>
+        <span>Static analysis (linting, formatting, complexity checks)</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">B</span>
+        <span>Human code review</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">C</span>
+        <span>Deployment to production</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 4)">
+        <span class="opt-letter">D</span>
+        <span>LLM-as-Judge review</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-4">
+      <strong>Correct!</strong> When a PR is created, automated checks trigger immediately. The first stage is static analysis: linting, formatting, complexity checks. Results are posted as PR comments and gates are enforced. LLM-as-Judge runs later in the pipeline.
+    </div>
+  </div>
+
+  <div class="quiz-question">
+    <h3><span class="q-num">Q5.</span> Why should LLM-as-Judge not replace human reviewers?</h3>
+    <div class="quiz-options">
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">A</span>
+        <span>LLMs are too slow for code review</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">B</span>
+        <span>LLMs cannot read code diffs</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, true, 5)">
+        <span class="opt-letter">C</span>
+        <span>LLMs lack business context and cannot make design decisions</span>
+      </div>
+      <div class="quiz-option" onclick="checkQuiz(this, false, 5)">
+        <span class="opt-letter">D</span>
+        <span>LLMs are too expensive for code review</span>
+      </div>
+    </div>
+    <div class="quiz-explanation" id="explanation-5">
+      <strong>Correct!</strong> LLM-as-Judge excels at pattern-based checks (standards, NFRs, defect patterns) but cannot understand business context, make design trade-off decisions, or evaluate architectural fitness. Human reviewers are essential for these judgment calls.
+    </div>
+  </div>
+
+  <div class="highlight-box purple" style="margin-top: 20px;">
+    <strong>Module 09 Complete.</strong> You now understand automated PR quality and LLM-as-Judge — how to enforce coding standards, verify NFRs, and scale review quality across a team. Next: <strong>Module 10 — Monitor and Observe</strong> (Agent Prism).
+  </div>
+</div>
+
+<script>
+function showTab(index) {
+  document.querySelectorAll('.tab-content').forEach((t, i) => {
+    t.classList.toggle('active', i === index);
+  });
+  document.querySelectorAll('.tab-bar button').forEach((b, i) => {
+    b.classList.toggle('active', i === index);
+  });
+}
+
+function toggleExpand(el) {
+  el.classList.toggle('open');
+}
+
+function checkQuiz(option, isCorrect, qNum) {
+  const question = option.closest('.quiz-question');
+  if (question.dataset.answered) return;
+  question.dataset.answered = 'true';
+
+  const options = question.querySelectorAll('.quiz-option');
+  options.forEach(o => { o.style.pointerEvents = 'none'; });
+
+  if (isCorrect) {
+    option.classList.add('correct');
+  } else {
+    option.classList.add('incorrect');
+    options.forEach(o => {
+      if (o !== option) {
+        const onclick = o.getAttribute('onclick');
+        if (onclick && onclick.includes('true')) {
+          o.classList.add('correct');
+        }
+      }
+    });
+  }
+
+  const explanation = document.getElementById('explanation-' + qNum);
+  if (explanation) explanation.classList.add('show');
+}
+</script>
+
+</body>
+</html>

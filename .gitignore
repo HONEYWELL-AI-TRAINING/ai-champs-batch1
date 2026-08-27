@@ -1,0 +1,132 @@
+# ========================
+# macOS
+# ========================
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.Spotlight-V100
+.Trashes
+
+# ========================
+# Windows
+# ========================
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# ========================
+# Linux
+# ========================
+*~
+.directory
+
+# ========================
+# IDE/Editor Files
+# ========================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+
+# ========================
+# Credentials & Secrets (DO NOT COMMIT)
+# ========================
+cred/
+*.pem
+*.key
+*.env
+.env.local
+.env.*.local
+*credentials*
+*secret*
+*token*
+*.p12
+*.pfx
+
+# ========================
+# Project-Specific Ignores
+# ========================
+# Report folder
+report/
+
+# Course Outline - Office documents
+courseOutline/*.docx
+courseOutline/*.pages
+
+# Presentations - PowerPoint source files
+presentations/ppt/
+presentations/*.pptx
+
+# Labs - Facilitator guides
+labs/module-*/facilitator-guide.md
+
+# ========================
+# Office Documents (Large Binary Files)
+# ========================
+# Uncomment if you want to ignore Office files
+# *.docx
+# *.xlsx
+# *.pptx
+# *.pdf
+# *.pages
+
+# ========================
+# Archive/Backup Files
+# ========================
+backup/
+*.bak
+*.backup
+*.old
+*.orig
+*.tmp
+*.temp
+
+# ========================
+# Build/Cache Directories
+# ========================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+*.egg
+node_modules/
+.cache/
+.tmp/
+
+# ========================
+# Temporary Files
+# ========================
+*.log
+*.tmp
+temp/
+tmp/
+
+# ========================
+# OS-Specific Files
+# ========================
+# Windows
+*.lnk
+*.url
+# macOS
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# ========================
+# Sensitive Data
+# ========================
+# API keys, tokens, passwords
+# If any sensitive data is accidentally committed, remove it immediately
